@@ -2,7 +2,26 @@ import Link from 'next/link';
 import React from 'react';
 import Image from 'next/image';
 
-async function fetchBlog(id) {
+// Define the type for the blog response
+interface Blog {
+  data: {
+    attributes: {
+      Title: string;
+      Description: string;
+      img: {
+        data: {
+          attributes: {
+            url: string;
+          };
+        };
+      };
+      publishedAt: string;
+    };
+  };
+}
+
+// Specify 'id' as a string
+async function fetchBlog(id: string): Promise<Blog | null> {
   const options = {
     headers: {
       Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
@@ -13,14 +32,25 @@ async function fetchBlog(id) {
       `http://127.0.0.1:1337/api/blogs/${id}?populate=*`,
       options
     );
+    if (!res.ok) {
+      throw new Error('Network response was not ok.');
+    }
     const response = await res.json();
-    return response;
+    return response as Blog;
   } catch (err) {
     console.error(err);
+    return null;
   }
 }
 
-const Page = async ({ params }) => {
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+// Update the component to be compatible with Next.js
+const Page = async ({ params }: PageProps) => {
   const blog = await fetchBlog(params.id);
 
   if (!blog) {
@@ -45,10 +75,10 @@ const Page = async ({ params }) => {
       </div>
       <div className='mt-4'>
         <h1 className='text-3xl font-semibold'>
-          {blog.data.attributes.Title}
+          {Title}
         </h1>
         <p className='text-gray-600 mt-2'>
-          {blog.data.attributes.Description}
+          {Description}
         </p>
         <div className='mt-4 flex items-center text-green-400'>
           <span className='text-sm'>
